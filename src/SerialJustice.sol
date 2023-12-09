@@ -95,13 +95,12 @@ contract SerialJustice is VRFConsumerBaseV2 {
         }
 
         if (
-            i_justiceToken.balanceOf(s_questionArray[questionId].submitter) <
-            i_justiceToken.ANSWER_PRICE()
+            i_justiceToken.balanceOf(msg.sender) < i_justiceToken.ANSWER_PRICE()
         ) {
             revert SerialJustice__NotEnoughBalance();
         }
 
-        i_justiceToken.burnOne(s_questionArray[questionId].submitter);
+        i_justiceToken.burnOne(msg.sender);
         s_questionArray[questionId].state = QuestionState
             .AWAITING_VOTER_DESIGNATION;
 
