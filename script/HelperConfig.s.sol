@@ -40,7 +40,7 @@ contract HelperConfig is Script {
                 nbValidations: 3,
                 vrfCoordinator: 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
                 gasLane: 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
-                subscriptionId: 7523,
+                subscriptionId: 0,
                 callBackGasLimit: 500000,
                 linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
                 deployerKey: vm.envUint("PRIVATE_KEY")
@@ -58,7 +58,7 @@ contract HelperConfig is Script {
                 nbValidations: 3,
                 vrfCoordinator: 0xbd13f08b8352A3635218ab9418E340c60d6Eb418,
                 gasLane: 0x121a143066e0f2f08b620784af77cccb35c6242460b4a8ee251b4b416abaebd4,
-                subscriptionId: 408,
+                subscriptionId: 0,
                 callBackGasLimit: 500000,
                 linkToken: 0xfaFedb041c0DD4fA2Dc0d87a6B0979Ee6FA7af5F,
                 deployerKey: vm.envUint("PRIVATE_KEY")
