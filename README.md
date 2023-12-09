@@ -2,11 +2,11 @@
 
 
 
-# How to
+# Getting started
 
-### Getting ready
+### Preparation
 
-Create a Metamask account and fund it with Fantom Testnet Opera Faucet using https://faucet.fantom.network/.
+Create a MetaMask account and fund it with Fantom Testnet Opera Faucet using https://faucet.fantom.network/.
 
 
 
@@ -73,3 +73,8 @@ Deploy to fantom testnet
 make deploy ARGS="--network fantom-test"
 ````
 
+Congratulations! The DAO with SerialJustice is now deployed on the fantom test network.
+
+The `MainDAO` contract address will be shown in the logs.
+
+Running `make deploy` also called the `export.py` script, which exports the contract address and RPC URL to a given location, this will be useful to perform SerialJustice simulations on the fantom test network.
