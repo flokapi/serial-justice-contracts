@@ -77,4 +77,4 @@ Congratulations! The DAO with SerialJustice is now deployed on the fantom test n
 
 The `MainDAO` contract address will be shown in the logs.
 
-Running `make deploy` also called the `export.py` script, which exports the contract address and RPC URL to a given location, this will be useful to perform SerialJustice simulations on the fantom test network.
+Running `make deploy` also called the `export.py` script, which exports the contract data (last deployment address, ABIs and RPC URL) to a given location, this will be useful to perform SerialJustice simulations on the fantom test network.
