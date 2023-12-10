@@ -4,7 +4,7 @@
 
 # Getting started
 
-### Preparation
+## Preparation
 
 Fantom Testnet Tokens
 
@@ -25,7 +25,7 @@ LINK Tokens
 
 
 
-### Installation
+## Installation
 
 Create a parent folder
 
@@ -45,7 +45,7 @@ cd serial-justice-foundry
 
 
 
-Create an `.env ` file and paste the private key of the wallet you previously created.
+Create an `.env ` file and paste the private key of the previously created wallet.
 
 ````
 PRIVATE_KEY=XXXXXXXXXXXXXXXX
@@ -66,7 +66,7 @@ make build
 
 
 
-### Unit and integration tests
+## Unit and integration tests
 
 ````
 make test
@@ -76,9 +76,9 @@ All tests should pass
 
 
 
-### Deployment
+## Deployment
 
-Deploy to fantom testnet
+Deploy to Fantom Testnet
 
 ````
 make deploy ARGS="--network fantom-test"
@@ -90,4 +90,4 @@ Congratulations! The DAO with SerialJustice is now deployed on the Fantom test n
 
 The `MainDAO` contract address will be shown in the logs.
 
-Running `make deploy` also called the `export.py` script, which exports the contract data (last deployment address, ABIs and RPC URL) to a given location, this will be useful to perform SerialJustice simulations on the fantom test network.
+Running `make deploy` also called the `export.py` script, which exports the contract data (last deployment address, ABIs and RPC URL) to a given location, this will be useful to perform SerialJustice simulations on the Fantom Testnet.
