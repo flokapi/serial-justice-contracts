@@ -10,7 +10,7 @@ Fantom Testnet Tokens
 
 1. Add Fantom Testnet to MetaMask: https://chainlist.org/chain/4002
 
-2. Create a MetaMask account and fund it with Fantom Testnet Opera Faucet using https://faucet.fantom.network/.
+2. Create a new MetaMask wallet and fund it with Fantom Testnet Opera Faucet using https://faucet.fantom.network/.
 
 
 
@@ -84,7 +84,7 @@ Deploy to Fantom Testnet
 make deploy ARGS="--network fantom-test"
 ````
 
-Note the subscription ID and save it in the `getFantomTestnetEthConfig`  function from`script/HelperConfig.s.sol`
+Note the subscription ID and save it in the `getFantomTestnetEthConfig`  function from`script/HelperConfig.s.sol`. This will enable the created Chainlink VRF subscription to be reused by future deployments.
 
 Congratulations! The DAO with SerialJustice is now deployed on the Fantom test network.
 
