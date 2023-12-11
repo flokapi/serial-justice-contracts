@@ -11,12 +11,14 @@ contract JusticeToken is ERC20, AutomationCompatibleInterface {
     error JusticeToken__UpkeepNotNeeded();
     error JusticeToken__OnlySerialJustice();
 
-    uint256 public constant MAX_BALANCE = 10 * 10 ** 18;
-    uint256 public constant ANSWER_PRICE = 1 * 10 ** 18;
+    uint256 private constant MAX_BALANCE_UNITS = 10;
+    uint256 private constant ANSWER_PRICE_UNITS = 1;
 
     SerialJustice private immutable i_serialJustice;
     MainDAO private immutable i_mainDAO;
     uint256 private immutable i_updateIterval;
+    uint256 private immutable i_max_balance;
+    uint256 private immutable i_answer_price;
 
     uint256 private s_lastTimeStamp;
     uint256 private s_updateCounter;
@@ -36,6 +38,10 @@ contract JusticeToken is ERC20, AutomationCompatibleInterface {
         i_serialJustice = SerialJustice(serialJusticeAddress);
         i_mainDAO = MainDAO(mainDAOAddress);
         i_updateIterval = updateInterval;
+
+        i_max_balance = MAX_BALANCE_UNITS * 10 ** decimals();
+        i_answer_price = ANSWER_PRICE_UNITS * 10 ** decimals();
+
         s_lastTimeStamp = block.timestamp;
         s_updateCounter = 0;
     }
@@ -55,23 +61,23 @@ contract JusticeToken is ERC20, AutomationCompatibleInterface {
         updateTokens();
     }
 
-    function updateTokens() internal {
+    function updateTokens() private {
         uint256 membersCount = i_mainDAO.getMemberCount();
 
         for (uint256 i = 0; i < membersCount; i++) {
             address memberAddress = i_mainDAO.getMemberAddress(i);
             uint256 currentBalance = balanceOf(memberAddress);
-            if (currentBalance < MAX_BALANCE - 1) {
-                _mint(memberAddress, 1 * 10 ** decimals());
+            if (currentBalance < i_max_balance - i_answer_price) {
+                _mint(memberAddress, i_answer_price);
             }
         }
 
         s_updateCounter++;
-        emit UpdatedTokens(1);
+        emit UpdatedTokens(s_updateCounter);
     }
 
-    function burnOne(address accountAddress) public onlySerialJustice {
-        _burn(accountAddress, ANSWER_PRICE);
+    function burnOne(address accountAddress) external onlySerialJustice {
+        _burn(accountAddress, i_answer_price);
     }
 
     function getUpdateCount() public view returns (uint256) {
@@ -82,8 +88,8 @@ contract JusticeToken is ERC20, AutomationCompatibleInterface {
         return i_updateIterval;
     }
 
-    function getAnswerPrice() public pure returns (uint256) {
-        return ANSWER_PRICE;
+    function getAnswerPrice() public view returns (uint256) {
+        return i_answer_price;
     }
 
     function getSerialJusticeAddress() public view returns (address) {

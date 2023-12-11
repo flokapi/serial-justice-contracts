@@ -71,7 +71,7 @@ contract SerialJustice is VRFConsumerBaseV2 {
             revert SerialJustice__IsNotAMember();
         }
 
-        if (i_justiceToken.balanceOf(msg.sender) < i_justiceToken.ANSWER_PRICE()) {
+        if (i_justiceToken.balanceOf(msg.sender) < i_justiceToken.getAnswerPrice()) {
             revert SerialJustice__NotEnoughBalance();
         }
 
@@ -88,7 +88,7 @@ contract SerialJustice is VRFConsumerBaseV2 {
             revert SerialJustice__NewVoteRequestNotAllowed();
         }
 
-        if (i_justiceToken.balanceOf(msg.sender) < i_justiceToken.ANSWER_PRICE()) {
+        if (i_justiceToken.balanceOf(msg.sender) < i_justiceToken.getAnswerPrice()) {
             revert SerialJustice__NotEnoughBalance();
         }
 

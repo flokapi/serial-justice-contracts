@@ -27,6 +27,7 @@ contract MainDAOUnitTest is Test {
     address linkToken;
     uint256 creatorKey;
     address creator;
+    uint256 answerPrice;
 
     address[] daoMembers;
     address memberAlice;
@@ -35,7 +36,6 @@ contract MainDAOUnitTest is Test {
 
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
     uint256 public constant NB_DAO_MEMBERS = 10;
-    uint256 public constant ANSWER_PRICE = 1 * 10 ** 18;
     string public constant QUESTION_TEXT = "Is it true?";
 
     modifier timeToUpdateTokens() {
@@ -103,6 +103,8 @@ contract MainDAOUnitTest is Test {
         // Access network cfg params
         (updateInterval,, vrfCoordinator, gasLane,, callBackGasLimit, linkToken, creatorKey) =
             helperConfig.activeNetworkConfig();
+
+        answerPrice = justiceToken.getAnswerPrice();
 
         creator = vm.addr(creatorKey);
 
@@ -179,7 +181,7 @@ contract MainDAOUnitTest is Test {
         justiceToken.performUpkeep("0x");
 
         uint256 balanceRecorded = justiceToken.balanceOf(memberAlice);
-        assert(balanceRecorded == ANSWER_PRICE);
+        assert(balanceRecorded == answerPrice);
     }
 
     // ************************* JusticeToken security
@@ -196,7 +198,7 @@ contract MainDAOUnitTest is Test {
         justiceToken.burnOne(memberAlice);
         uint256 balanceAfter = justiceToken.balanceOf(memberAlice);
 
-        assert(balanceBefore == ANSWER_PRICE);
+        assert(balanceBefore == answerPrice);
         assert(balanceAfter == 0);
     }
 
