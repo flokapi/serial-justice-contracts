@@ -61,7 +61,7 @@ contract HelperConfig is Script {
                 nbValidations: 3,
                 vrfCoordinator: 0xbd13f08b8352A3635218ab9418E340c60d6Eb418,
                 gasLane: 0x121a143066e0f2f08b620784af77cccb35c6242460b4a8ee251b4b416abaebd4,
-                subscriptionId: 414,
+                subscriptionId: 0,
                 callBackGasLimit: 500000,
                 linkToken: 0xfaFedb041c0DD4fA2Dc0d87a6B0979Ee6FA7af5F,
                 deployerKey: vm.envUint("PRIVATE_KEY")
