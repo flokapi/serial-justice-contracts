@@ -24,38 +24,19 @@ contract DeployMainDAO is Script {
 
         if (subscriptionId == 0) {
             CreateSubscription createSubscription = new CreateSubscription();
-            subscriptionId = createSubscription.createSubscription(
-                vrfCoordinator,
-                deployerKey
-            );
+            subscriptionId = createSubscription.createSubscription(vrfCoordinator, deployerKey);
 
             FundSubscription fundSubscription = new FundSubscription();
-            fundSubscription.fundSubscription(
-                vrfCoordinator,
-                subscriptionId,
-                linkToken,
-                deployerKey
-            );
+            fundSubscription.fundSubscription(vrfCoordinator, subscriptionId, linkToken, deployerKey);
         }
 
         vm.startBroadcast(deployerKey);
-        MainDAO mainDAO = new MainDAO(
-            vrfCoordinator,
-            subscriptionId,
-            gasLane,
-            callBackGasLimit,
-            updateInterval,
-            nbValidations
-        );
+        MainDAO mainDAO =
+            new MainDAO(vrfCoordinator, subscriptionId, gasLane, callBackGasLimit, updateInterval, nbValidations);
         vm.stopBroadcast();
 
         AddConsumer addConsumer = new AddConsumer();
-        addConsumer.addConsumer(
-            mainDAO.getSerialJusticeAddress(),
-            vrfCoordinator,
-            subscriptionId,
-            deployerKey
-        );
+        addConsumer.addConsumer(mainDAO.getSerialJusticeAddress(), vrfCoordinator, subscriptionId, deployerKey);
 
         return (mainDAO, helperConfig);
     }

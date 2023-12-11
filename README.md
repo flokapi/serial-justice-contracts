@@ -94,6 +94,6 @@ Running `make deploy` also called the `export.py` script, which exports the cont
 
 
 
-## Perform a SerialJustice simulation
+## SerialJustice simulation
 
 See: https://github.com/flokapi/serial-justice-simulation
