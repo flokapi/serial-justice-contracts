@@ -20,7 +20,8 @@ contract MainDAOUnitTest is Test {
     JusticeToken justiceToken;
     HelperConfig helperConfig;
 
-    uint256 updateInterval;
+    uint256 tokenUpdateInterval;
+    uint256 voteTimeout;
     address vrfCoordinator;
     bytes32 gasLane;
     uint32 callBackGasLimit;
@@ -38,14 +39,22 @@ contract MainDAOUnitTest is Test {
     uint256 public constant NB_DAO_MEMBERS = 10;
     string public constant QUESTION_TEXT = "Is it true?";
 
+    modifier skipFork() {
+        if (block.chainid != 31337) {
+            return;
+        } else {
+            _;
+        }
+    }
+
     modifier timeToUpdateTokens() {
-        vm.warp(block.timestamp + updateInterval + 1);
+        vm.warp(block.timestamp + tokenUpdateInterval + 1);
         vm.roll(block.number + 1);
         _;
     }
 
     modifier tokensUpdatedOnce() {
-        vm.warp(block.timestamp + updateInterval + 1);
+        vm.warp(block.timestamp + tokenUpdateInterval + 1);
         vm.roll(block.number + 1);
         justiceToken.performUpkeep("0x");
         _;
@@ -69,14 +78,6 @@ contract MainDAOUnitTest is Test {
             address(serialJustice)
         );
         _;
-    }
-
-    modifier skipFork() {
-        if (block.chainid != 31337) {
-            return;
-        } else {
-            _;
-        }
     }
 
     function addDaoMembers() public {
@@ -105,7 +106,8 @@ contract MainDAOUnitTest is Test {
 
         // Access network cfg params
         (
-            updateInterval,
+            tokenUpdateInterval,
+            voteTimeout,
             ,
             vrfCoordinator,
             gasLane,
@@ -187,7 +189,6 @@ contract MainDAOUnitTest is Test {
     }
 
     function testPerformUpkeepRevertsWhenNotNeeded() public {
-        vm.prank(creator);
         vm.expectRevert(JusticeToken.JusticeToken__UpkeepNotNeeded.selector);
         justiceToken.performUpkeep("0x");
     }
@@ -196,7 +197,6 @@ contract MainDAOUnitTest is Test {
         public
         timeToUpdateTokens
     {
-        vm.prank(creator);
         justiceToken.performUpkeep("0x");
 
         uint256 balanceRecorded = justiceToken.balanceOf(memberAlice);
@@ -226,15 +226,18 @@ contract MainDAOUnitTest is Test {
 
     // ************************* SerialJustice questions
 
-    function testCannotSumbitQuestionIfNotAMember() public {
-        vm.prank(notAMember);
-        vm.expectRevert(SerialJustice.SerialJustice__IsNotAMember.selector);
-        serialJustice.submitQuestion(QUESTION_TEXT);
-    }
-
     function testCannotSubmitQuestionIfNotEnoughBalance() public {
         vm.prank(memberAlice);
         vm.expectRevert(SerialJustice.SerialJustice__NotEnoughBalance.selector);
+        serialJustice.submitQuestion(QUESTION_TEXT);
+    }
+
+    function testCannotSumbitQuestionIfNotAMember() public tokensUpdatedOnce {
+        vm.prank(memberAlice);
+        justiceToken.transfer(notAMember, answerPrice);
+
+        vm.prank(notAMember);
+        vm.expectRevert(SerialJustice.SerialJustice__IsNotAMember.selector);
         serialJustice.submitQuestion(QUESTION_TEXT);
     }
 
@@ -249,6 +252,7 @@ contract MainDAOUnitTest is Test {
             string memory recordedText,
             address submitter,
             address nextVoter,
+            ,
             ,
 
         ) = serialJustice.getQuestionData(0);
@@ -312,6 +316,7 @@ contract MainDAOUnitTest is Test {
             ,
             address nextVoter,
             ,
+            ,
 
         ) = serialJustice.getQuestionData(0);
 
@@ -365,12 +370,41 @@ contract MainDAOUnitTest is Test {
             ,
             address nextVoter,
             uint256 nbVotesYes,
-            uint256 nbVotesNo
+            uint256 nbVotesNo,
+
         ) = serialJustice.getQuestionData(0);
 
         assert(recordedState == SerialJustice.QuestionState.IDLE);
         assert(nextVoter == address(0));
         assert(nbVotesYes == 1);
         assert(nbVotesNo == 0);
+    }
+
+    function testDifferentVoterPickedIfVoterDidNotVote()
+        public
+        skipFork
+        tokensUpdatedOnce
+        questionSubmittedAndVoterDesignated
+    {
+        // Can't directly compare the voter address, because the VRFCoordinatorV2Mock
+        // always returns the same value
+        // Also, it might happen that the same voter gets picked twice in a row
+        (, , , , , , uint256 voteUntilBefore) = serialJustice.getQuestionData(
+            0
+        );
+
+        vm.warp(block.timestamp + voteTimeout + 1);
+        vm.roll(block.number + 1);
+        vm.prank(notAMember);
+        serialJustice.performUpkeep("0x");
+
+        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
+            uint256(2),
+            address(serialJustice)
+        );
+
+        (, , , , , , uint256 voteUntilAfter) = serialJustice.getQuestionData(0);
+
+        assert(voteUntilAfter == voteUntilBefore + voteTimeout + 1);
     }
 }

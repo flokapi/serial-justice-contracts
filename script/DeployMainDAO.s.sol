@@ -12,7 +12,8 @@ contract DeployMainDAO is Script {
         console.log("===> deploying main dao");
         HelperConfig helperConfig = new HelperConfig();
         (
-            uint256 updateInterval,
+            uint256 tokenUpdateInterval,
+            uint256 voteTimeout,
             uint256 nbValidations,
             address vrfCoordinator,
             bytes32 gasLane,
@@ -44,7 +45,8 @@ contract DeployMainDAO is Script {
             subscriptionId,
             gasLane,
             callBackGasLimit,
-            updateInterval,
+            tokenUpdateInterval,
+            voteTimeout,
             nbValidations
         );
         vm.stopBroadcast();

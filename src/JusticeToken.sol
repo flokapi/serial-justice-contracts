@@ -53,7 +53,7 @@ contract JusticeToken is ERC20, AutomationCompatibleInterface {
     ) public view returns (bool, bytes memory) {
         bool upkeepNeeded = ((block.timestamp - s_lastTimeStamp) >
             i_updateIterval);
-        return (upkeepNeeded, "0x0");
+        return (upkeepNeeded, "0x");
     }
 
     function performUpkeep(bytes calldata) external override {

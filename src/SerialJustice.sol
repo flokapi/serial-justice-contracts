@@ -6,14 +6,16 @@ import {JusticeToken} from "./JusticeToken.sol";
 
 import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.sol";
 
-contract SerialJustice is VRFConsumerBaseV2 {
+contract SerialJustice is VRFConsumerBaseV2, AutomationCompatibleInterface {
     error SerialJustice__IsNotAMember();
     error SerialJustice__NotEnoughBalance();
     error SerialJustice__InvalidQuestionId();
     error SerialJustice__NewVoteRequestNotAllowed();
     error SerialJustice__NewVoteNotAllowed();
     error SerialJustice__NotAllowedToVoteOnThisQuestion();
+    error SerialJustice__UpkeepNotNeeded();
 
     enum QuestionState {
         IDLE,
@@ -29,6 +31,7 @@ contract SerialJustice is VRFConsumerBaseV2 {
         address nextVoter;
         uint256 nbVotesYes;
         uint256 nbVotesNo;
+        uint256 voteUntil;
     }
 
     // Chainlink VRF variables
@@ -40,6 +43,7 @@ contract SerialJustice is VRFConsumerBaseV2 {
     uint32 private constant NUM_WORDS = 1;
 
     uint256 private immutable i_nbValidations;
+    uint256 private immutable i_voteTimeout;
     MainDAO private immutable i_mainDAO;
     JusticeToken private immutable i_justiceToken;
     Question[] private s_questionArray;
@@ -47,13 +51,31 @@ contract SerialJustice is VRFConsumerBaseV2 {
 
     event RequestedNewVoter(uint256 requestId);
 
+    modifier onlyMember() {
+        if (i_mainDAO.isMember(msg.sender) == false) {
+            revert SerialJustice__IsNotAMember();
+        }
+        _;
+    }
+
+    modifier hasEnoughBalance() {
+        if (
+            i_justiceToken.balanceOf(msg.sender) <
+            i_justiceToken.getAnswerPrice()
+        ) {
+            revert SerialJustice__NotEnoughBalance();
+        }
+        _;
+    }
+
     constructor(
         address vrfCoordinatorV2,
         uint64 subscriptionId,
         bytes32 gasLane,
         uint32 callbackGasLimit,
         address daoAddress,
-        uint256 updateInterval,
+        uint256 tokenUpdateInterval,
+        uint256 voteTimeout,
         uint256 nbValidations
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
@@ -65,44 +87,38 @@ contract SerialJustice is VRFConsumerBaseV2 {
         i_justiceToken = new JusticeToken(
             address(this),
             daoAddress,
-            updateInterval
+            tokenUpdateInterval
         );
         i_nbValidations = nbValidations;
+        i_voteTimeout = voteTimeout;
     }
 
-    function submitQuestion(string memory text) public {
-        if (i_mainDAO.isMember(msg.sender) == false) {
-            revert SerialJustice__IsNotAMember();
-        }
-
-        if (
-            i_justiceToken.balanceOf(msg.sender) <
-            i_justiceToken.getAnswerPrice()
-        ) {
-            revert SerialJustice__NotEnoughBalance();
-        }
-
+    function submitQuestion(
+        string memory text
+    ) public onlyMember hasEnoughBalance {
         Question storage newQuestion = s_questionArray.push();
         newQuestion.state = QuestionState.IDLE;
         newQuestion.text = text;
         newQuestion.submitter = msg.sender;
 
-        requestNewVoter(s_questionArray.length - 1);
+        i_justiceToken.burnOne(msg.sender);
+        pickRandomVoter(s_questionArray.length - 1);
     }
 
-    function requestNewVoter(uint256 questionId) public {
-        if (s_questionArray[questionId].state != QuestionState.IDLE) {
-            revert SerialJustice__NewVoteRequestNotAllowed();
-        }
+    function requestNewVote(
+        uint256 questionId
+    ) public onlyMember hasEnoughBalance {
+        if (questionId >= s_questionArray.length)
+            revert SerialJustice__InvalidQuestionId();
 
-        if (
-            i_justiceToken.balanceOf(msg.sender) <
-            i_justiceToken.getAnswerPrice()
-        ) {
-            revert SerialJustice__NotEnoughBalance();
-        }
+        if (s_questionArray[questionId].state != QuestionState.IDLE)
+            revert SerialJustice__NewVoteRequestNotAllowed();
 
         i_justiceToken.burnOne(msg.sender);
+        pickRandomVoter(questionId);
+    }
+
+    function pickRandomVoter(uint256 questionId) private {
         s_questionArray[questionId].state = QuestionState
             .AWAITING_VOTER_DESIGNATION;
 
@@ -127,24 +143,21 @@ contract SerialJustice is VRFConsumerBaseV2 {
 
         s_questionArray[questionId].nextVoter = nextVoter;
         s_questionArray[questionId].state = QuestionState.AWAITING_VOTER_ANSWER;
+        s_questionArray[questionId].voteUntil = block.timestamp + i_voteTimeout;
         delete s_requestIdToQuestionId[requestId];
     }
 
     function answerQuestion(uint256 questionId, bool answer) public {
-        if (questionId >= s_questionArray.length) {
+        if (questionId >= s_questionArray.length)
             revert SerialJustice__InvalidQuestionId();
-        }
 
         if (
             s_questionArray[questionId].state !=
             QuestionState.AWAITING_VOTER_ANSWER
-        ) {
-            revert SerialJustice__NewVoteNotAllowed();
-        }
+        ) revert SerialJustice__NewVoteNotAllowed();
 
-        if (s_questionArray[questionId].nextVoter != msg.sender) {
+        if (s_questionArray[questionId].nextVoter != msg.sender)
             revert SerialJustice__NotAllowedToVoteOnThisQuestion();
-        }
 
         if (answer == true) {
             s_questionArray[questionId].nbVotesYes += 1;
@@ -153,6 +166,7 @@ contract SerialJustice is VRFConsumerBaseV2 {
         }
 
         s_questionArray[questionId].nextVoter = address(0);
+        s_questionArray[questionId].voteUntil = 0;
 
         if (
             s_questionArray[questionId].nbVotesYes >= i_nbValidations ||
@@ -162,6 +176,43 @@ contract SerialJustice is VRFConsumerBaseV2 {
         } else {
             s_questionArray[questionId].state = QuestionState.IDLE;
         }
+    }
+
+    function checkUpkeep(
+        bytes memory
+    ) public view returns (bool, bytes memory) {
+        for (
+            uint256 questionId = 0;
+            questionId < s_questionArray.length;
+            questionId++
+        ) {
+            if (isVoteTimeout(questionId)) {
+                return (true, "0x");
+            }
+        }
+        return (false, "0x");
+    }
+
+    function performUpkeep(bytes calldata) external override {
+        (bool upkeepNeeded, ) = checkUpkeep("0x");
+        if (!upkeepNeeded) {
+            revert SerialJustice__UpkeepNotNeeded();
+        }
+        for (
+            uint256 questionId = 0;
+            questionId < s_questionArray.length;
+            questionId++
+        ) {
+            if (isVoteTimeout(questionId)) {
+                pickRandomVoter(questionId);
+            }
+        }
+    }
+
+    function isVoteTimeout(uint256 questionId) private view returns (bool) {
+        return (s_questionArray[questionId].state ==
+            QuestionState.AWAITING_VOTER_ANSWER &&
+            s_questionArray[questionId].voteUntil < block.timestamp);
     }
 
     function getQuestionCount() public view returns (uint256) {
@@ -179,6 +230,7 @@ contract SerialJustice is VRFConsumerBaseV2 {
             address,
             address,
             uint256,
+            uint256,
             uint256
         )
     {
@@ -192,7 +244,8 @@ contract SerialJustice is VRFConsumerBaseV2 {
             s_questionArray[questionId].submitter,
             s_questionArray[questionId].nextVoter,
             s_questionArray[questionId].nbVotesYes,
-            s_questionArray[questionId].nbVotesNo
+            s_questionArray[questionId].nbVotesNo,
+            s_questionArray[questionId].voteUntil
         );
     }
 

@@ -12,8 +12,17 @@ contract CreateSubscription is Script {
     function createSubscriptionUsingConfig() public returns (uint64) {
         console.log("===> Create subscription, new helper config");
         HelperConfig helperConfig = new HelperConfig();
-        (, , address vrfCoordinator, , , , , uint256 deployerKey) = helperConfig
-            .activeNetworkConfig();
+        (
+            ,
+            ,
+            ,
+            address vrfCoordinator,
+            ,
+            ,
+            ,
+            ,
+            uint256 deployerKey
+        ) = helperConfig.activeNetworkConfig();
         return createSubscription(vrfCoordinator, deployerKey);
     }
 
@@ -44,6 +53,7 @@ contract FundSubscription is Script {
     function fundSubscriptionUsingConfig() public {
         HelperConfig helperConfig = new HelperConfig();
         (
+            ,
             ,
             ,
             address vrfCoordinator,
@@ -108,6 +118,7 @@ contract AddConsumer is Script {
     function addConsumerUsingConfig(address raffle) public {
         HelperConfig helperConfig = new HelperConfig();
         (
+            ,
             ,
             ,
             address vrfCoordinator,

@@ -25,6 +25,7 @@ contract MainDAO {
         bytes32 gasLane,
         uint32 callbackGasLimit,
         uint256 updateInterval,
+        uint256 voteTimeout,
         uint256 nbValidations
     ) {
         i_creator = msg.sender;
@@ -35,6 +36,7 @@ contract MainDAO {
             callbackGasLimit,
             address(this),
             updateInterval,
+            voteTimeout,
             nbValidations
         );
     }

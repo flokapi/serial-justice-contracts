@@ -8,7 +8,8 @@ import {LinkToken} from "../test/mocks/LinkToken.sol";
 
 contract HelperConfig is Script {
     struct NetworkConfig {
-        uint256 updateInterval;
+        uint256 tokenUpdateInterval;
+        uint256 voteTimeout;
         uint256 nbValidations;
         address vrfCoordinator;
         bytes32 gasLane;
@@ -36,7 +37,8 @@ contract HelperConfig is Script {
     function getSepoliaEthConfig() public view returns (NetworkConfig memory) {
         return
             NetworkConfig({
-                updateInterval: 60,
+                tokenUpdateInterval: 60,
+                voteTimeout: 60,
                 nbValidations: 3,
                 vrfCoordinator: 0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625,
                 gasLane: 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
@@ -54,7 +56,8 @@ contract HelperConfig is Script {
     {
         return
             NetworkConfig({
-                updateInterval: 60,
+                tokenUpdateInterval: 60,
+                voteTimeout: 60,
                 nbValidations: 3,
                 vrfCoordinator: 0xbd13f08b8352A3635218ab9418E340c60d6Eb418,
                 gasLane: 0x121a143066e0f2f08b620784af77cccb35c6242460b4a8ee251b4b416abaebd4,
@@ -83,8 +86,9 @@ contract HelperConfig is Script {
 
         return
             NetworkConfig({
-                updateInterval: 60 * 60 * 24,
-                nbValidations: 5,
+                tokenUpdateInterval: 60 * 60 * 24,
+                voteTimeout: 60 * 60 * 24,
+                nbValidations: 6,
                 vrfCoordinator: address(vrfCoordinatorV2Mock),
                 gasLane: 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c,
                 subscriptionId: 0,
