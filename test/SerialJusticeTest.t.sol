@@ -150,19 +150,16 @@ contract MainDAOUnitTest is Test {
     }
 
     function testCannotAccessAnInvalidMember() public {
-        vm.prank(creator);
         vm.expectRevert(MainDAO.MainDAO__InvalidMemberId.selector);
         mainDAO.getMemberAddress(NB_DAO_MEMBERS);
     }
 
-    function testMemberIsAMember() public {
-        vm.prank(creator);
+    function testMemberIsAMember() public view {
         bool recordedIsMember = mainDAO.isMember(memberAlice);
         assert(recordedIsMember == true);
     }
 
-    function testNotMemberIsNotAMember() public {
-        vm.prank(creator);
+    function testNotMemberIsNotAMember() public view {
         bool recordedIsMember = mainDAO.isMember(notAMember);
         assert(recordedIsMember == false);
     }
@@ -209,9 +206,9 @@ contract MainDAOUnitTest is Test {
         public
         tokensUpdatedOnce
     {
-        vm.prank(creator);
+        vm.prank(memberAlice);
         vm.expectRevert(JusticeToken.JusticeToken__OnlySerialJustice.selector);
-        justiceToken.burnOne(creator);
+        justiceToken.burnOne(memberBob);
     }
 
     function testSerialJusticeContractCanBurnTokens() public tokensUpdatedOnce {
@@ -335,7 +332,7 @@ contract MainDAOUnitTest is Test {
         tokensUpdatedOnce
         questionSubmitted
     {
-        vm.prank(memberBob);
+        vm.prank(memberAlice);
         vm.expectRevert(
             SerialJustice.SerialJustice__NewVoteNotAllowed.selector
         );
@@ -395,7 +392,6 @@ contract MainDAOUnitTest is Test {
 
         vm.warp(block.timestamp + voteTimeout + 1);
         vm.roll(block.number + 1);
-        vm.prank(notAMember);
         serialJustice.performUpkeep("0x");
 
         VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
