@@ -29,7 +29,13 @@ contract MainDAO {
     ) {
         i_creator = msg.sender;
         i_serialJustice = new SerialJustice(
-            vrfCoordinatorV2, subscriptionId, gasLane, callbackGasLimit, address(this), updateInterval, nbValidations
+            vrfCoordinatorV2,
+            subscriptionId,
+            gasLane,
+            callbackGasLimit,
+            address(this),
+            updateInterval,
+            nbValidations
         );
     }
 

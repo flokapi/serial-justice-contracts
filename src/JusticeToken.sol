@@ -32,9 +32,11 @@ contract JusticeToken is ERC20, AutomationCompatibleInterface {
         _;
     }
 
-    constructor(address serialJusticeAddress, address mainDAOAddress, uint256 updateInterval)
-        ERC20("JusticeToken", "JT")
-    {
+    constructor(
+        address serialJusticeAddress,
+        address mainDAOAddress,
+        uint256 updateInterval
+    ) ERC20("JusticeToken", "JT") {
         i_serialJustice = SerialJustice(serialJusticeAddress);
         i_mainDAO = MainDAO(mainDAOAddress);
         i_updateIterval = updateInterval;
@@ -46,13 +48,16 @@ contract JusticeToken is ERC20, AutomationCompatibleInterface {
         s_updateCounter = 0;
     }
 
-    function checkUpkeep(bytes memory) public view returns (bool, bytes memory) {
-        bool upkeepNeeded = ((block.timestamp - s_lastTimeStamp) > i_updateIterval);
+    function checkUpkeep(
+        bytes memory
+    ) public view returns (bool, bytes memory) {
+        bool upkeepNeeded = ((block.timestamp - s_lastTimeStamp) >
+            i_updateIterval);
         return (upkeepNeeded, "0x0");
     }
 
     function performUpkeep(bytes calldata) external override {
-        (bool upkeepNeeded,) = checkUpkeep("0x");
+        (bool upkeepNeeded, ) = checkUpkeep("0x");
         if (!upkeepNeeded) {
             revert JusticeToken__UpkeepNotNeeded();
         }

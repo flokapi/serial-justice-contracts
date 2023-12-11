@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.9;
 
 import {DeployMainDAO} from "../script/DeployMainDAO.s.sol";
 import {MainDAO} from "../src/MainDAO.sol";
@@ -64,7 +64,10 @@ contract MainDAOUnitTest is Test {
         Vm.Log[] memory entries = vm.getRecordedLogs();
         bytes32 requestId = entries[1].topics[2];
 
-        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(uint256(requestId), address(serialJustice));
+        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
+            uint256(requestId),
+            address(serialJustice)
+        );
         _;
     }
 
@@ -101,8 +104,16 @@ contract MainDAOUnitTest is Test {
         justiceToken = JusticeToken(justiceTokenAddr);
 
         // Access network cfg params
-        (updateInterval,, vrfCoordinator, gasLane,, callBackGasLimit, linkToken, creatorKey) =
-            helperConfig.activeNetworkConfig();
+        (
+            updateInterval,
+            ,
+            vrfCoordinator,
+            gasLane,
+            ,
+            callBackGasLimit,
+            linkToken,
+            creatorKey
+        ) = helperConfig.activeNetworkConfig();
 
         answerPrice = justiceToken.getAnswerPrice();
 
@@ -130,7 +141,9 @@ contract MainDAOUnitTest is Test {
         address existingMember = mainDAO.getMemberAddress(0);
 
         vm.prank(creator);
-        vm.expectRevert(MainDAO.MainDAO__CannotAddAlreadyExistingMember.selector);
+        vm.expectRevert(
+            MainDAO.MainDAO__CannotAddAlreadyExistingMember.selector
+        );
         mainDAO.addMember(existingMember);
     }
 
@@ -161,12 +174,15 @@ contract MainDAOUnitTest is Test {
     // ************************* JusticeToken automation
 
     function testDoesNotAllowUpkeepWhenNotReady() public view {
-        (bool performUpkeep,) = justiceToken.checkUpkeep("0x");
+        (bool performUpkeep, ) = justiceToken.checkUpkeep("0x");
         assert(performUpkeep == false);
     }
 
-    function testAllowsUpkeepWhenEnoughTimeHasPassed() public timeToUpdateTokens {
-        (bool performUpkeep,) = justiceToken.checkUpkeep("0x");
+    function testAllowsUpkeepWhenEnoughTimeHasPassed()
+        public
+        timeToUpdateTokens
+    {
+        (bool performUpkeep, ) = justiceToken.checkUpkeep("0x");
         assert(performUpkeep == true);
     }
 
@@ -176,7 +192,10 @@ contract MainDAOUnitTest is Test {
         justiceToken.performUpkeep("0x");
     }
 
-    function testPerformUpkeepUpdatesTokensWhenEnoughTimePassed() public timeToUpdateTokens {
+    function testPerformUpkeepUpdatesTokensWhenEnoughTimePassed()
+        public
+        timeToUpdateTokens
+    {
         vm.prank(creator);
         justiceToken.performUpkeep("0x");
 
@@ -186,7 +205,10 @@ contract MainDAOUnitTest is Test {
 
     // ************************* JusticeToken security
 
-    function testCannotBurnJusticeTokenFromAnyAccount() public tokensUpdatedOnce {
+    function testCannotBurnJusticeTokenFromAnyAccount()
+        public
+        tokensUpdatedOnce
+    {
         vm.prank(creator);
         vm.expectRevert(JusticeToken.JusticeToken__OnlySerialJustice.selector);
         justiceToken.burnOne(creator);
@@ -216,29 +238,59 @@ contract MainDAOUnitTest is Test {
         serialJustice.submitQuestion(QUESTION_TEXT);
     }
 
-    function testCanSumbitQuestionIfMemberAndEnoughBalance() public tokensUpdatedOnce questionSubmitted {
+    function testCanSumbitQuestionIfMemberAndEnoughBalance()
+        public
+        tokensUpdatedOnce
+        questionSubmitted
+    {
         uint256 recordedNbOfQuestion = serialJustice.getQuestionCount();
-        (SerialJustice.QuestionState recordedState, string memory recordedText, address submitter, address nextVoter,,)
-        = serialJustice.getQuestionData(0);
+        (
+            SerialJustice.QuestionState recordedState,
+            string memory recordedText,
+            address submitter,
+            address nextVoter,
+            ,
+
+        ) = serialJustice.getQuestionData(0);
 
         assert(recordedNbOfQuestion == 1);
-        assert(recordedState == SerialJustice.QuestionState.AWAITING_VOTER_DESIGNATION);
-        assert(keccak256(abi.encodePacked(recordedText)) == keccak256(abi.encodePacked(QUESTION_TEXT)));
+        assert(
+            recordedState ==
+                SerialJustice.QuestionState.AWAITING_VOTER_DESIGNATION
+        );
+        assert(
+            keccak256(abi.encodePacked(recordedText)) ==
+                keccak256(abi.encodePacked(QUESTION_TEXT))
+        );
         assert(submitter == memberAlice);
         assert(nextVoter == address(0));
     }
 
     // ************************* SerialJustice VRF and voter designation
 
-    function testFulfillRandomWordsCanOnlyBeCalledAfterNewVoterRequested() public skipFork tokensUpdatedOnce {
+    function testFulfillRandomWordsCanOnlyBeCalledAfterNewVoterRequested()
+        public
+        skipFork
+        tokensUpdatedOnce
+    {
         vm.expectRevert("nonexistent request");
-        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(0, address(serialJustice));
+        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
+            0,
+            address(serialJustice)
+        );
 
         vm.expectRevert("nonexistent request");
-        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(1, address(serialJustice));
+        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
+            1,
+            address(serialJustice)
+        );
     }
 
-    function testFulfillRandomWordsPicksANewVoter() public skipFork tokensUpdatedOnce {
+    function testFulfillRandomWordsPicksANewVoter()
+        public
+        skipFork
+        tokensUpdatedOnce
+    {
         // Arrange
         address expectedNextVoter = memberBob;
 
@@ -249,20 +301,39 @@ contract MainDAOUnitTest is Test {
         Vm.Log[] memory entries = vm.getRecordedLogs();
         bytes32 requestId = entries[1].topics[2];
 
-        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(uint256(requestId), address(serialJustice));
+        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(
+            uint256(requestId),
+            address(serialJustice)
+        );
 
-        (SerialJustice.QuestionState recordedState,,, address nextVoter,,) = serialJustice.getQuestionData(0);
+        (
+            SerialJustice.QuestionState recordedState,
+            ,
+            ,
+            address nextVoter,
+            ,
+
+        ) = serialJustice.getQuestionData(0);
 
         // Assert
         assert(nextVoter == expectedNextVoter);
-        assert(recordedState == SerialJustice.QuestionState.AWAITING_VOTER_ANSWER);
+        assert(
+            recordedState == SerialJustice.QuestionState.AWAITING_VOTER_ANSWER
+        );
     }
 
     // ************************* SerialJustice submitted answers
 
-    function testCanOnlySubmitAnswerIfQuestionStateAllows() public skipFork tokensUpdatedOnce questionSubmitted {
+    function testCanOnlySubmitAnswerIfQuestionStateAllows()
+        public
+        skipFork
+        tokensUpdatedOnce
+        questionSubmitted
+    {
         vm.prank(memberBob);
-        vm.expectRevert(SerialJustice.SerialJustice__NewVoteNotAllowed.selector);
+        vm.expectRevert(
+            SerialJustice.SerialJustice__NewVoteNotAllowed.selector
+        );
         serialJustice.answerQuestion(0, true);
     }
 
@@ -273,7 +344,9 @@ contract MainDAOUnitTest is Test {
         questionSubmittedAndVoterDesignated
     {
         vm.prank(memberAlice);
-        vm.expectRevert(SerialJustice.SerialJustice__NotAllowedToVoteOnThisQuestion.selector);
+        vm.expectRevert(
+            SerialJustice.SerialJustice__NotAllowedToVoteOnThisQuestion.selector
+        );
         serialJustice.answerQuestion(0, true);
     }
 
@@ -286,8 +359,14 @@ contract MainDAOUnitTest is Test {
         vm.prank(memberBob);
         serialJustice.answerQuestion(0, true);
 
-        (SerialJustice.QuestionState recordedState,,, address nextVoter, uint256 nbVotesYes, uint256 nbVotesNo) =
-            serialJustice.getQuestionData(0);
+        (
+            SerialJustice.QuestionState recordedState,
+            ,
+            ,
+            address nextVoter,
+            uint256 nbVotesYes,
+            uint256 nbVotesNo
+        ) = serialJustice.getQuestionData(0);
 
         assert(recordedState == SerialJustice.QuestionState.IDLE);
         assert(nextVoter == address(0));

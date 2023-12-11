@@ -62,7 +62,11 @@ contract SerialJustice is VRFConsumerBaseV2 {
         i_callbackGasLimit = callbackGasLimit;
 
         i_mainDAO = MainDAO(daoAddress);
-        i_justiceToken = new JusticeToken(address(this), daoAddress, updateInterval);
+        i_justiceToken = new JusticeToken(
+            address(this),
+            daoAddress,
+            updateInterval
+        );
         i_nbValidations = nbValidations;
     }
 
@@ -71,7 +75,10 @@ contract SerialJustice is VRFConsumerBaseV2 {
             revert SerialJustice__IsNotAMember();
         }
 
-        if (i_justiceToken.balanceOf(msg.sender) < i_justiceToken.getAnswerPrice()) {
+        if (
+            i_justiceToken.balanceOf(msg.sender) <
+            i_justiceToken.getAnswerPrice()
+        ) {
             revert SerialJustice__NotEnoughBalance();
         }
 
@@ -88,21 +95,32 @@ contract SerialJustice is VRFConsumerBaseV2 {
             revert SerialJustice__NewVoteRequestNotAllowed();
         }
 
-        if (i_justiceToken.balanceOf(msg.sender) < i_justiceToken.getAnswerPrice()) {
+        if (
+            i_justiceToken.balanceOf(msg.sender) <
+            i_justiceToken.getAnswerPrice()
+        ) {
             revert SerialJustice__NotEnoughBalance();
         }
 
         i_justiceToken.burnOne(msg.sender);
-        s_questionArray[questionId].state = QuestionState.AWAITING_VOTER_DESIGNATION;
+        s_questionArray[questionId].state = QuestionState
+            .AWAITING_VOTER_DESIGNATION;
 
         uint256 requestId = i_vrfCoordinator.requestRandomWords(
-            i_gasLane, i_subscriptionId, REQUEST_CONFIRMATIONS, i_callbackGasLimit, NUM_WORDS
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
         );
         s_requestIdToQuestionId[requestId] = questionId;
         emit RequestedNewVoter(requestId);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+    function fulfillRandomWords(
+        uint256 requestId,
+        uint256[] memory randomWords
+    ) internal override {
         uint256 questionId = s_requestIdToQuestionId[requestId];
         uint256 voterId = randomWords[0] % i_mainDAO.getMemberCount();
         address nextVoter = i_mainDAO.getMemberAddress(voterId);
@@ -117,7 +135,10 @@ contract SerialJustice is VRFConsumerBaseV2 {
             revert SerialJustice__InvalidQuestionId();
         }
 
-        if (s_questionArray[questionId].state != QuestionState.AWAITING_VOTER_ANSWER) {
+        if (
+            s_questionArray[questionId].state !=
+            QuestionState.AWAITING_VOTER_ANSWER
+        ) {
             revert SerialJustice__NewVoteNotAllowed();
         }
 
@@ -134,8 +155,8 @@ contract SerialJustice is VRFConsumerBaseV2 {
         s_questionArray[questionId].nextVoter = address(0);
 
         if (
-            s_questionArray[questionId].nbVotesYes >= i_nbValidations
-                || s_questionArray[questionId].nbVotesNo >= i_nbValidations
+            s_questionArray[questionId].nbVotesYes >= i_nbValidations ||
+            s_questionArray[questionId].nbVotesNo >= i_nbValidations
         ) {
             s_questionArray[questionId].state = QuestionState.FINAL_ANSWER;
         } else {
@@ -147,10 +168,19 @@ contract SerialJustice is VRFConsumerBaseV2 {
         return s_questionArray.length;
     }
 
-    function getQuestionData(uint256 questionId)
+    function getQuestionData(
+        uint256 questionId
+    )
         public
         view
-        returns (QuestionState, string memory, address, address, uint256, uint256)
+        returns (
+            QuestionState,
+            string memory,
+            address,
+            address,
+            uint256,
+            uint256
+        )
     {
         if (questionId >= s_questionArray.length) {
             revert SerialJustice__InvalidQuestionId();
