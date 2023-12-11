@@ -209,7 +209,7 @@ contract SerialJustice is VRFConsumerBaseV2, AutomationCompatibleInterface {
         }
     }
 
-    function isVoteTimeout(uint256 questionId) private view returns (bool) {
+    function isVoteTimeout(uint256 questionId) public view returns (bool) {
         return (s_questionArray[questionId].state ==
             QuestionState.AWAITING_VOTER_ANSWER &&
             s_questionArray[questionId].voteUntil < block.timestamp);
@@ -247,6 +247,10 @@ contract SerialJustice is VRFConsumerBaseV2, AutomationCompatibleInterface {
             s_questionArray[questionId].nbVotesNo,
             s_questionArray[questionId].voteUntil
         );
+    }
+
+    function getVoteTimeout() public view returns (uint256) {
+        return i_voteTimeout;
     }
 
     function getDaoAddress() public view returns (address) {
